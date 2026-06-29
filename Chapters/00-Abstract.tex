@@ -2,24 +2,37 @@
 \chapter*{Resumen}
 
 % Versión en español del resumen
-\guideinfo{En la sección \textit{Resumen}, presenta un resumen conciso de tu proyecto, destacando los puntos clave. 
-Comienza con una breve declaración del problema u objetivo, seguida de una descripción de tu enfoque o metodología. 
-Resume los principales resultados o conclusiones, resaltando su importancia o implicaciones. Concluye con una o dos 
-frases sobre la contribución global o el impacto de tu trabajo. El resumen debe ser claro y conciso, idealmente entre 
-150 y 250 palabras, para que los lectores comprendan rápidamente tu investigación y su relevancia.}
+\guideinfo{El objetivo de este proyecto es el diseño e implementación de un modelo de \acrfull{ia} capaz de automatizar la segmentación semántica de los usos del suelo en España a partir de
+las imágenes del satélite Sentinel-2. El enfoque metodológico propuesto implicó la extracción de las imágenes satelitales, mediante Google Earth Engine, y la descarga de la base de datos
+con los usos de suelo clasificados a nivel nacional ofrecida por \acrfull{corine} Land Cover España. Estos datos se analizaron con la librería Rasterio con el fin de comprobar que estuvieran en el
+mismo \acrfull{crs}. Adicionalmente rasterizamos la información vectorial dentro del geopackage y la proyectamos sobre el sistema EPSG:25830 para alinearlo con
+las imágenes del satélite con resolución de 10 metros por píxel y separando los macro parches en parches más manejables de 50x50.
+\newline
+Para la creación de la red neuronal, se propusieron dos modelos distintos: El primero una \acrfull{cnn} que desemboca en un \acrfull{mlp} con el fin de 
+clasificar el parche en la categoría estimada mayoritaria, la cual toma parches de 48x48x4 y los clasifica en un vector de probabilidades de 1x19. Posteriormente se diseñó un modelo
+basado en una \acrshort{cnn} con estructura U-Net, la cual clasifica los parches de 48x48 a nivel de píxel, asignando a cada uno una de las 19 etiquetas propuestas por BigEarthNet. Este trabajo 
+pretende acercarse al nivel de BigEarthNet sobre suelo español, con el fin de actualizar en un futuro los usos de suelo a nivel nacional de forma más rápida y eficiente de forma automática
+o al menos como un apoyo.
+}
 
-\keywordses{Palabra clave A, Palabra clave B, Palabra clave C.}
+\keywordses{Segmentación semántica, \acrfull{cnn}, Sentinel-2, CORINE Land Cover, Usos de suelo, Inteligencia artificial}
 
 \MediaOptionLogicBlank
 
 \pdfbookmark[1]{Abstract}{abstract}
 \chapter*{Abstract}
-\guideinfo{In the \textit{Abstract} section, provide a concise summary of your project, highlighting the key points. 
-Begin with a brief statement of the problem or objective, followed by a description of your approach or methodology. 
-Summarise the main results or findings, emphasising their significance or implications. Conclude with a sentence or 
-two on the overall contribution or impact of your work. Keep the abstract clear and focused, ideally within 150-250 
-words, to give readers a quick understanding of your research and its importance.}
+\guideinfo{The objective of this project is the design and implementation of an \acrfull{ai} model capable of automating the semantic segmentation of land cover and 
+land use in Spain using Sentinel-2 satellite imagery. The proposed methodological approach involved extracting the satellite images through Google Earth Engine and downloading 
+the national level classified land use database provided by \acrfull{corinein} Land Cover Spain. These data were analyzed using the Rasterio library to verify that they shared the 
+same \acrfull{crs}. Additionally, the vector information within the geopackage was rasterized and projected onto the EPSG:25830 system to align it with the satellite images at a 
+spatial resolution of 10 meters per pixel, and finally divide the macro patches into more manageable 50x50 patches.
+\newline
+For the development of the neural network, two distinct models were proposed: First, a \acrfull{cnnin} coupled with a \acrfull{mlpin} aimed at classifying each patch into its estimated 
+majority category, which takes 48x48x4 patches and maps them into a 1x19 probability vector. Subsequently, a model based on a \acrshort{cnnin} with a U-Net architecture was designed 
+to perform pixel-level classification on the 48x48 patches, assigning each coordinate one of the 19 labels proposed by BigEarthNet. This work aims to approach the benchmark performance 
+of BigEarthNet on Spanish soil, with the ultimate purpose of enabling faster, more efficient, and automated updates of national land use maps in the future, or at least serving as a support tool.
+}
 
-\keywordsen{Keyword A, Keyword B, Keyword C.}
+\keywordsen{Semantic segmentation, \acrfull{cnn}, Sentinel-2, CORINE Land Cover, Land use, Artificial intelligence}
 
 \MediaOptionLogicBlank
