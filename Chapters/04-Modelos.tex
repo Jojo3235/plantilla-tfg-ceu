@@ -1,0 +1,21 @@
+\chapter{Desarrollo e Implementación de los Modelos}[Desarrollo e Implementación de los Modelos]
+\label{cp:modelos}
+
+Una vez consolidada la base de datos dual y garantizada la coherencia geométrica píxel a píxel de las muestras, el foco de este trabajo 
+se centra en el diseño, configuración y desarrollo de las arquitecturas de aprendizaje profundo. En el ámbito de la teledetección, la 
+elección y el diseño de la estructura de una red neuronal no solo dependen de la naturaleza de los datos de entrada, sino del objetivo 
+deseado.
+
+
+El propósito principal de este capítulo es desglosar las decisiones técnicas y de ingeniería de software adoptadas para materializar las 
+herramientas predictivas de este proyecto. El flujo de trabajo se ha estructurado de manera progresiva, comenzando por la configuración 
+del entorno de computación. Posteriormente, el diseño experimental se divide en dos aproximaciones metodológicas diferenciadas y complementarias:
+un modelo inicial de clasificación global (por parche) y un modelo de segmentación semántica (por píxel).
+
+
+El desarrollo del primer modelo (un clasificador a nivel de parche) es una aproximación para intuir si las \acrshort{cnn} son capaces de extraer
+los patrones macroscópicos y firmas espectrales conjuntas a partir de cuatro bandas seleccionadas de Sentinel-2. Mientras que el segundo, se aborda
+una arquitectura basada en una U-net orientada a la segmentación semántica píxel a píxel. Este segundo modelo pretende aumentar la resolución de 
+la clasificación, pasando de la clasificación global a la clasificación a nivel de píxel. A lo largo de las siguientes secciones se detallarán
+la carga de los datos, la arquitectura de ambas redes, las restricciones que provocaron una redimensión de los parches y las estrategias 
+a la hora de controlar las funciones de pérdida, buscando suavizar el desbalanceo de las clases a nivel nacional. 
