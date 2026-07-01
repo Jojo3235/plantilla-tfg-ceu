@@ -40,13 +40,13 @@ Estas coordenadas generan los siguientes macro-parches para nuestro proyecto, co
 \begin{figure}[!htpb]
     \centering
     \includegraphics[width=0.5\linewidth]{Img/Theme/macroparches.png}
-    \caption[Macro-parches España]{Representación de los 6 macro-parches generados mediante el motor de \acrshort{gee} \cite{googleearthengine.com}}
+    \caption[Macro-parches España]{Representación de los 6 macro-parches generados mediante el motor de \acrshort{gee} |\citet{googleearthengine.com}|}
     \label{fig:parches}
 \end{figure}
 
 
 Para cada una de estas regiones, se realizó una consulta a los datos extraídos por el satélite Sentinel-2A, el cual ofrece los valores de reflectancia
-en la superficie corregidos atmosféricamente \cite{sentinel2}. La búsqueda se acotó entre el 1 de junio y el 30 de septiembre de 2018, con el fin 
+en la superficie corregidos atmosféricamente |\citet{sentinel2}|. La búsqueda se acotó entre el 1 de junio y el 30 de septiembre de 2018, con el fin 
 de conseguir una coherencia con los datos extraídos de \acrshort{clc} España 2018. Se aplicó un filtro por el cual se ignoraron fotos con más de 
 un 10\% de nubes. También se aplicó un filtro por el cual se toma la mediana de cada uno de los píxeles para evitar nubes puntuales, o cualquier
 cosa que pueda distorsionar la señal. Finalmente se aplicó un filtro con el cual cualquier imagen fuera de territorio español fuera eliminada, principalmente las relativas al mar.
