@@ -1,28 +1,129 @@
 \chapter[Introducción]{Introducción}
 \label{cp:introduction}
 
-La delimitación y el análisis de la ocupación del suelo constituyen una herramienta estratégica fundamental que, según señalan los organismos oficiales \cite{ign_ocupacion}, es de gran ayuda
-para el diseño de políticas medioambientales eficaces, la elaboración de diagnósticos socioeconómicos de alta precisión, así como para la ejecución de evaluaciones de impacto ambiental y planes
-de ordenación del territorio. Para llevar a cabo estas tareas se requiere un flujo de datos que requiere información fiable, o como la define el \acrfull{cnig}, objetiva precisa, armonizada y
-actualizada, de la zona estudiada. Tradicionalmente, en España, esta caracterización de los usos de suelo se ha realizado en 2 fases:
-\begin{itemize}
-    \item Una primera fase en la que se extraen datos de fuentes siendo las principales con el fin de obtener una base de datos coherente y estructurada de manera automática: 
-    \begin{itemize}
-        \item Catastro 
-        \item SIGPAC
-        \item Información de la Declaración de Agricultores
-        \item Cobertura de datos PNOA LiDAR
-        \item Foto Fija del Mapa Forestal
-        \item Versiones anteriores del SIOSE
-        \item Etc.
-    \end{itemize}
- 
-De las 3 primeras se toman datos en un entorno de 1 año a una año de referencia base dependinendo de la fecha que se quiera estudiar, y del resto de referencias se usan las más actualizadas 
-    \item 
-\end{itemize} la primera es la extracción de datos de manera automática
-de fuentes, las cuales aportan una base de datos coherente y estructurada;  \cite{siose.es} 
-\begin{advertencia}
-No se admitirán Trabajos Fin de Grado que sean una mera revisión bibliográfica, limitándose a resumir el estado del arte de algún área concreta de conocimiento.
+La idea de clasificar el suelo según lo que hacemos en él, ya sea para un cultivo, una zona residencial, un bosque o un polígono industrial, 
+es algo que sirve para la planificación de diferentes tareas para la gestión de ciudades. Saber qué hay en cada metro cuadrado del territorio
+es fundamental para decidir qué zonas naturales proteger, cómo planificar el crecimiento de las ciudades, cómo repartir las ayudas a los
+agricultores o cómo actuar con rapidez ante una emergencia como incendios o inundaciones.  
 
-Sí está permitido realizar análisis del mercado o estudios comparativos que vayan más allá de una mera síntesis del estado del arte.
-\end{advertencia}
+
+Hasta ahora, en España, este trabajo de clasificación se revisaba manualmente cada vez que se buscaba actualizar el mapa de cobertura y usos de 
+suelo, sobre una base de datos generada de manera automática apoyándose en múltiples fuentes. Así se han formado grandes bases de datos como
+\acrfull{siose} a nivel nacional o \acrshort{corine} Land Cover a nivel europeo, con la parte de \acrshort{corine} Land Cover España disponible
+junto a \acrshort{siose} en el centro de descargas del \acrfull{ign}. No obstante, esto trae consigo una dependencia del ojo humano, haciendo
+que este proceso sea extremadamente lento, al revisar toda la expansión del territorio de esta forma, provocando que estos mapas se actualicen
+completamente cada ciertos años, generando que cambios diarios en el uso del suelo, como expansiones de ciudades, de parques naturales, o cualquier
+cambio del suelo, no se vean reflejados en los mapas hasta varios años más tarde.
+
+
+Esta es una de las principales causas por las cuales surge este proyecto, junto con la ayuda de la \acrshort{ia} y satélites como la
+constelación Sentinel-2 del programa europeo Copernicus, tenemos disponible un flujo constante de imágenes de alta resolución de la Tierra. 
+Mediante la fusión de estos 2 recursos, podemos aspirar a automatizar en gran medida este proceso de clasificación, de manera similar a como 
+lo hace BigEarthNet con otros países europeos. El plan y objetivo central de este trabajo es desarrollar un sistema semejante, pero diseñado
+para clasificar el suelo español peninsular.
+
+
+Este \acrfull{tfg} nace de una propuesta real y de una necesidad tecnológica planteada por la empresa \textbf{Xcalibur}, especializada en 
+teledetección y mapeo avanzado del territorio. Este documento pretende explicar el flujo de trabajo realizado para la creación de los modelos,
+partiendo desde la extracción de 6 macroparches con imágenes de Sentinel-2 extraídos de \acrfull{gee} hasta la evaluación de los resultados, pasando 
+por todos los ajustes que son necesarios para cuadrar los datos gracias a la librería \textbf{Rasterio} con los mapas vectoriales ofrecidos por 
+\acrshort{corine} Land Cover España bajo la proyección EPSG:25830 y la visualización de estos de manera masiva gracias a la herramienta 
+\textbf{QGIS}. Para no trabajar con imágenes con miles de kilómetros cuadrados de área, se trocearon en archivos de extensión npy tanto para 
+datos de entrada como de salida, bajo la nomenclatura de archivos \texttt{\_X.npy} (para las bandas 2,3,4 y 8 del satélite) y \texttt{\_Y.npy} 
+(para las etiquetas de uso del suelo), organizados en matrices de $50\times 50$ píxeles.
+
+
+Con el conjunto de datos preparado, implementamos, entrenamos y evaluamos dos modelos de redes neuronales basados en una estructura de \acrshort{CNN},
+para la parte de obtención de las características de los parches. El primer modelo se trata de un modelo de clasificación en el cual un bloque 
+convolucional alimenta a un \acrshort{mlp} con el fin de clasificar los parches entrantes asignándoles una probabilidad a cada una de las etiquetas y devolviendo la clase mayoritaria 
+como resultado. El segundo modelo utiliza la parte convolucional como un encoder que genera un espacio latente, conectándolo con un bloque convolucional
+inverso (el decoder) mediante una arquitectura \textbf{U-net} para devolver las etiquetas a nivel de píxel en vez de parche, lo cual permite predecir con mayor resolución los usos de suelo en 
+cada parche. Para que las operaciones de la U-net sean exactas reduciremos los parches de $50\times 50$ a $48\times 48$ permitiendo un mejor 
+flujo de los datos. Vimos que había un gran desbalanceo en España, habiendo muchas zonas naturales comparado con otras zonas, como
+industriales o comerciales, se añadieron unos sesgos en la función de pérdida asociados a cada una de las clases, dando mayor importancia a las 
+que aparecen menos. Finalmente, evaluamos los modelos graficando la evolución de métricas como la pérdida o la precisión, con la ayuda de \textbf{matplotlib} y matrices de confusión
+para entender los resultados de nuestros modelos. 
+
+\section{Contexto y Planteamiento del Problema}
+\label{sec:contexto_problema}
+
+Para comprender la necesidad de automatizar la cartografia del territorio, es necesario entender que el suelo es dinámico, por lo que cosas esenciales
+en un país, como la ordenación del territorio y el diseño de políticas medioambientales, requieren una revisión sistemática y constante, ya que
+fenómenos como la expansión urbana, la deforestación o los cambios drásticos en los cultivos, modifican el mapa periodicamente.
+
+
+Bases de datos como \acrshort{siose} o \acrshort{corine} Land Cover han ayudado con la creación de mapas de usos y cobertura del suelo para la gestión
+tanto a nivel español como europeo. Sin embargo, crear estos mapas conlleva un gran esfuerzo, requiriendo la revisión manual de los mapas generados 
+automáticamente mediante fuentes disponibles como Catastro, \acrfull{sigpac} o la Información de la Declaración de Agricultores \cite{siose.es}.
+Es por esto que los mapas a nivel nacional se actualicen cada 6 años, lo que no permite reflejar todos los cambios necesarios para un óptimo
+manejo de los recursos, lo que perjudica a las empresas y entidades que tengan que trabajar con estas cartografías desactualizadas para tomar decisiones relevantes.
+
+
+Por lo tanto, el problema que aborda este \acrshort{tfg} no es la falta de imágenes o fuentes para construir estos mapas, sino proponer una solución
+al problema de la revisión completamente humana de estos, mediante la implementación de modelos de \acrshort{ia}, con el fin de actualizar estos
+mapas con mayor frecuencia, buscando mantener la precisión.
+
+\section{La oportunidad de la Inteligencia Artificial}
+\label{sec:oportunidad_ia}
+
+Para superar las limitaciones de los métodos manuales y adaptarse a la velocidad con la que cambia el entorno, la \acrshort{ia}, y más concretamente
+el aprendizaje profundo (\textit{Deep Learning}), se presenta como una solución excelente. Esto es posible debido a, en primer lugar, la disponibilidad
+de constelaciones de satélites, como es el caso de Sentinel-2, los cuales generan imágenes multiespectrales de la Tierra, y, en segundo lugar,
+a la capacidad de las redes neuronales de analizar una cantidad masiva de datos, más concretamente las \acrshort{cnn}, por su diseño capaz de
+analizar imágenes. 
+
+
+Por un lado, Sentinel-2, aporta un flujo continuo de datos, con distintas resoluciones y bandas espectrales. Al estar actualizando los datos
+con alta frecuencia, de todas las bandas que obtiene Sentinel-2 nosotros nos quedaremos con tan solo 4. Esta obtención actualizada y continua de
+datos nos solventa el problema de la captura de datos, y dejar de depender de tantas fuentes como hasta ahora en \acrshort{siose}, ofreciendo un
+conjunto de datos actualizado y fiable. Por otro lado, los algoritmos de aprendizaje profundo son capaces de procesar estas ingentes cantidades 
+de datos y aprender a reconocer patrones en estos sobre el terreno, asignándole a cada píxel en los datos un uso de suelo específico.
+
+
+Esta idea ya fue puesta realizada por parte de BigEarthNet, quienes, mediante parches de ambas constelaciones Sentinel (1 y 2) para unos
+determinados países europeos consiguieron entrenar redes neuronales profundas con un nivel de precisión y automatización elevado. Siguiendo el
+modelo internacional, este trabajo plantea el plan de trasladar esa misma filosofía al suelo español peninuslar, construyendo una herramienta
+que facilite la clasificación de los usos de suelo de forma frecuente y automatizada.
+
+
+\section{Motivación del proyecto}
+\label{sec:motivacion}
+
+Este \acrshort{tfg} surge ante una propuesta de la empresa \textbf{Xcalibur}, una empresa líder en el sector de la industria geofísica
+aérea y mapeo de alta resolución del territorio \cite{xcalibur}, más concretamente de su departamento de \acrshort{ia} que buscaba entrenar un
+modelo para la detección de los usos de suelo dadas las imágenes de la constelación Sentinel-2.
+
+
+Dentro de su actividad, poder disponer de mapas actualizados sobre los usos de suelo y no tener que realizar vuelos con tanta frecuencia para 
+poder obtener estos datos es de gran ayuda, al estar las principales bases de datos españolas, como \acrshort{corine} Land Cover o \acrshort{siose} desactualizadas.
+Es por esto que plantearan desde Xcalibur construir un modelo que ayude en la construcción de mapas de usos de suelo actualizados con más frecuencia,
+buscando obtener una precisión suficiente como para no dedicar tanto tiempo humano como se dedica actualmente en las revisiones manuales.    
+
+
+\section{Objetivos del proyecto}
+\label{sec:Objetivos}
+
+Para dar una solución efectiva al problema planteado por Xcalibur, este trabajo se articula en torno a un objetivo principal, del cual surgen
+unos más específicos.
+
+
+\subsection{Objetivo General}
+
+El objetivo de este proyecto es diseñar, implementar y evaluar un sistema de inteligencia artificial que permita automatizar, o al menos
+facilitar, la creación de cartografías que clasifiquen y hagan una segmentación semántica de los usos del suelo de la España peninsular a partir
+de imágenes multiespectrales de la constelación Sentinel-2, tomando como referencia metodológica BigEarthNet.
+
+\subsection{Objetivos Específicos}
+Para lograr la meta principal, el desarrollo del proyecto se divide en los siguientes objetivos específicos:
+
+\begin{itemize}
+    \item \textbf{Descarga de los datos geoespaciales:} Descargar del motor de \acrshort{gee} las 4 bandas de 10 metros de resolución de Sentinel-2 y descargar las coberturas oficiales de \acrshort{corine} Land Cover España.
+    \item \textbf{Alineación cartográfica:} Sincronizar ambas fuentes de datos usando la librería \textit{Rasterio}, asegurando que las imágenes y las máscaras vectoriales con las etiquetas del uso del suelo coincidan bajo la proyección oficial EPSG:25830.
+    \item \textbf{Generación física del dataset estructurado:} Fragmentar las 6 regiones descargadas de \acrshort{gee} en aproximadamente 1000000 de parches más manejables de $50\times50$ píxeles, exportándolos como archivos emparejados (\texttt{\_X.npy} y \texttt{\_Y.npy}), eliminando aquellos que contengan algún valor nulo y redefiniendo las etiquetas de usos de suelo, pasando de las 44 categorías de Land Cover a las 19 usadas en BigEarthNet.
+    \item \textbf{Entrenamiento y evaluación de los modelos:} Implementar y comparar críticamente dos aproximaciones basadas en \acrshort{cnn}\begin{itemize}
+        \item un clasificador a nivel de parche para predecir la clase dominante por parche.
+        \item un modelo de segmentación semántica para predecir el uso de suelo a nivel de píxel, basado en la arquitectura U-Net.
+    \end{itemize}. En las cuales reducimos el tamaño del parche a $48\times 48$ para facilitar la descomposición del parche dentro de la red.
+    \item \textbf{Mitigación del desbalanceo de clases:} Diseñar e incorporar una función de pérdida avanzada basada en el Coeficiente de Dice Multiclase, aplicando sesgos y pesos específicos para corregir el desbalanceo de clases.
+    \item \textbf{Análisis de los resultados:} Evaluar los resultados finales de ambos modelos, compararlos con BigEarthNet y proponer posibles mejoras a futuro.
+\end{itemize}
