@@ -1,0 +1,154 @@
+\chapter[Obtención y Tratamiento de los datos]{Obtención y Tratamiento de los datos}
+\label{cp:obtencion}
+
+Antes de profundizar en el diseño y entrenamiento de las redes neuronales, es fundamental conocer la naturaleza de los datos utilizados en 
+este trabajo. En el ámbito de la teledetección aplicada a la \acrshort{ia}, el éxito de un modelo depende en gran medida de la calidad, formato
+y coherencia de los datos con los que se nutre al modelo. Por ello, en este capítulo se definen los datos con los que estamos trabajando, bajo
+qué marco de referencia geográfico se rigen y las transformaciones necesarias para convertirlos en datos útiles para nuestros modelos de 
+aprendizaje profundo.
+
+
+A lo largo del capítulo, se detallará el proceso de obtención de las imágenes multiespectrales y cartografía con las coberturas del suelo, pasando
+por la concordancia de sus coordenadas, hasta la fragmentación física del territorio en más de un millón de parches matriciales de entrada y salida.
+Este proceso garantiza que cada píxel de las coordenadas de las bandas espectrales coincida con las etiquetas de uso, a nivel de píxel, construyendo
+así una base de datos dual (Sentinel-2 - CORINE Land Cover España).  
+
+\section{Adquisición de fuentes masivas: \acrlong{gee} y \acrshort{cnig}}
+\label{data_source}
+
+El primer reto del proyecto consistió en la extracción y descarga de las fuentes de datos geoespaciales a gran escala. Para ello se recurrió a
+la plataforma \acrfull{gee} para las imágenes de satélite y al servidor oficial de \acrshort{corine} Land Cover España para la cartografía base.
+
+
+\subsection{Extracción de los espectros mediante \acrshort{gee}}
+
+Para la obtención de la información espectral se utilizó la plataforma \acrshort{gee}, empleando la API de Javascript para descargar los datos
+de forma automática. Para agilizar los procesos se separó la descarga en 6 parches distintos, cuatro en la zona central de España expandiendose hasta
+Valencia, uno en Galicia, para representar la costa gallega, y otro en Andalucía. Las coordenadas de cada parche son las siguientes, bajo el 
+sistema de referencia global WGS 84 (\acrshort{epsg}:4326), la cual usa grados para representar las coordenadas de la Tierra:
+\begin{itemize}
+    \item Cuadrante Central Noroeste (NW): Delimitado entre las longitudes -6.0 y -3.0 y latitudes 40.5 y 43.0
+    \item Cuadrante Central Noreste (NE): Delimitado entre las longitudes -3.0 y -0.5 y latitudes 40.5 y 42.5
+    \item Cuadrante Central Suroeste (SW): Delimitado entre las longitudes -6.0 y -3.0 y latitudes 38.0 y 40.5
+    \item Cuadrante Central Sureste (SE): Delimitado entre las longitudes -3.0 y -0.5 y latitudes 38.0 y 40.5
+    \item Cuadrante Gallego: Delimitado entre las longitudes -9.3 y -7.5 y latitudes 42.2 y 43.8
+    \item Cuadrante Andaluz: Delimitado entre las longitudes -6.5 y -1.6 y latitudes 36.0 y 37.2
+\end{itemize}
+
+Estas coordenadas generan los siguientes macro-parches para nuestro proyecto, como se puede ver en la Figura \ref{fig:parches}:
+
+\begin{figure}[!htpb]
+    \centering
+    \includegraphics[width=0.5\linewidth]{Img/Theme/macroparches.png}
+    \caption[Macro-parches España]{Representación de los 6 macro-parches generados mediante el motor de \acrshort{gee} \cite{googleearthengine.com}}
+    \label{fig:parches}
+\end{figure}
+
+
+Para cada una de estas regiones, se realizó una consulta a los datos extraídos por el satélite Sentinel-2A, el cual ofrece los valores de reflectancia
+en la superficie corregidos atmosféricamente \cite{sentinel2}. La búsqueda se acotó entre el 1 de junio y el 30 de septiembre de 2018, con el fin 
+de conseguir una coherencia con los datos extraídos de \acrshort{clc} España 2018. Se aplicó un filtro por el cual se ignoraron fotos con más de 
+un 10\% de nubes. También se aplicó un filtro por el cual se toma la mediana de cada uno de los píxeles para evitar nubes puntuales, o cualquier
+cosa que pueda distorsionar la señal. Finalmente se aplicó un filtro con el cual cualquier imagen fuera de territorio español fuera eliminada, principalmente las relativas al mar.
+
+
+Una vez se tienen ya todas las imágenes con el menor número de imperfecciones posibles, se genera un mosaico con todas las imágenes del satélite
+superpuestas para crear cada uno de los macroparches. De este mosaico se seleccionan únicamente las bandas de 10 metro de resolución por píxel, 
+B02 (espectro azul), B03 (espectro verde), B04 (espectro rojo) y B08 (espectro \acrshort{nir}), con el fin de no saturar la memoria de los 
+equipos con los que trabajamos. Estas imágenes con el fin de mantener una coherencia se descargaron bajo el marco de referencia \acrshort{epsg}:25830
+con el fin de que fuera más sencillo de procesar después y sincronizar con la base de datos de \acrshort{clc} España 2018. Una vez aplicados
+todos los filtros y seleccionadas las bandas deseadas, los mosaicos se exportan a Google Drive en formato GeoTIFF.
+
+
+\subsection{Descarga de etiquetas oficiales \acrshort{cnig}}
+
+De forma simultánea a la extracción de las imágenes de Sentinel-2, la información de referencia sobre la ocupación del suelo se obtuvo a través del
+\acrfull{cnig}. Desde su web se descargó el \textit{GeoPackage} de \acrshort{corine} Land Cover España 2018. Este \textit{GeoPackage} (.gpkg), almacena
+de forma vectorial polígonos del territorio español junto a una base de datos asociada. Cada uno de esos polígonos tiene asociado uno de las 44 
+clases de nivel 3 con las que clasifica \acrshort{corine}. Este archivo será el que se use como \textit{ground truth} para entrenar los modelos más adelante. 
+
+
+\section{Control de calidad visual en QGIS}
+
+Para visualizar los mosaicos y asegurarnos de que no hubo errores, hicimos uso de la aplicación QGIS. Dentro de esta aplicación en ella podemos 
+explorar de forma visual y rápida los macroparches espectrales para comprobar visualmente que no hubo fallos en la descarga.
+
+
+A modo de ejemplo, en la Figura \autoref{mosaicos} se muestran los mosaicos asociados a los cuadrantes norte (Noroeste y Noreste) cargados en el entorno de QGIS
+para comprobar que las bandas de Sentinel-2 eran correctas. Una vez verificado que las imágenes espectrales no presentaban ningún fallo, se superpusieron
+las capas vectoriales de \acrshort{corine}, comprobando si los límites geográficos de las coberturas coincidían con las imágenes espectrales, como 
+se puede apreciar en la Figura \autoref{superpos}.
+
+\begin{figure}[!htpb]
+    \centering
+    \includegraphics[width=0.5\linewidth]{Img/Theme/mosaicos.png}
+    \caption[Mosaicos NW y NE]{Mosaicos de la zona NW y NE vistos desde QGIS}
+    \label{fig:mosaicos}
+\end{figure}
+
+\begin{figure}[!htpb]
+    \centering
+    \includegraphics[width=0.5\linewidth]{Img/Theme/superpos.png}
+    \caption[Mosaicos NW y NE y CLC]{Mosaicos de la zona NW y NE superpuestos sobre el mapa vectorial de CORINE vistos desde QGIS}
+    \label{fig:superpos}
+\end{figure}
+
+
+\section{Puesta a punto de los datos}
+
+Al unificar las fuentes de información geoespacial para este trabajo, nos encontramos con un desafío de compatibilidad geométrica: las imágenes 
+multiespectrales obtenidas de Sentinel-2 son matrices de píxeles digitales (datos ráster), mientras que la cartografía de \acrshort{corine} Land Cover
+España descargada del \acrshort{cnig} está compuesta por datos vectoriales. Para que un modelo de segmentación semántica píxel a píxel pueda entrenarse,
+ambos recursos deben estar en el mismo formato y encajar de manera milimétrica en el espacio geográfico.
+
+
+Para lograr esto, se programó un script de preprocesamiento en Python haciendo uso de las librerías Rasterio y GeoPandas. El flujo se estructuró de
+la siguiente forma:
+\begin{itemize}
+    \item \textbf{Lectura y extracción de metadatos espaciales:} Utilizando el método de apertura de archivos ráster de Rasterio (\texttt{rasterio.open()}),
+    nos muestra el \acrfull{crs} para todos los mosaicos descargados, con el fin de poder asegurar que todos están bajo el mismo sistema de referencia:
+    EPSG:25830 (ETRS89 / UTM huso 30N). Este marco de referencia será con el que se trabaje durante todo el proyecto, con Geopandas logramos esto, que los
+    polígonos vectoriales utilicen la misma proyección que la que hemos definido previamente, ya que, si no lo hicieramos, acabaríamos asociando 
+    usos de suelo a donde no corresponde provocando que la red neuronal nos de fallos no deseados.
+    \item \textbf{Creación de la plantilla ráster:} Utilizando la función \texttt{features.rasterize}, el script genera una matriz de ceros, con el mismo
+    tamaño y resolución que las imágenes de Sentinel-2, las cuales servirán como molde para crear las matrices con los usos de suelo de CORINE. Tras 
+    ejecutar el script acabamos con una máscara con los usos de suelo asociados a cada uno de los píxeles de los datos espectrales. 
+\end{itemize} 
+
+\section{Generación física de parches (Dataset Final) y limpieza}
+
+Una vez que tanto las imágenes espectrales como las imágenes vectoriales se encuentran en formato ráster de píxel, se procede a su fragmentación. 
+El script recorre las matrices y las va recortando una a una en parches de $50\times 50$ píxeles.
+
+
+Cada ventana procesada genera 2 archivos nuevos almacenados con un identificador seguido de \_X.npy, si es un fichero de entrada (satélite) o 
+\_Y.npy si es un dato de \textit{Ground Truth} (\acrshort{corine}). Tras la ejecución completa de este proceso acabamos con más de 1.2 millones de parches, tanto 
+de entrada como de ground truth.
+
+
+Después del proceso de emparejamiento y recortado, se realizó un conteo de frecuencias, para evaluar cuántas veces se repetía cada código \acrshort{corine} en nuestros datos, resultando en que
+la mayoría de la informacion se encuentra en los mismos códigos de nivel 1, siendo los más comunes aquellos de la categoría 3
+seguidos de los de categoría 2, lo cual acabará generando desbalanceos a la hora de entrenar la red. 
+
+
+Independientemente de esto, y con el objetivo de seguir la misma
+metodología que \textbf{BigEarthNet}, pasamos los 44 códigos definidos por \acrshort{corine} a los 19 de BigEarthNet. En caso de detectar algún error
+o una zona sin datos (píxel vacío), lo clasificaremos con la etiqueta 19, estando los 19 primeros comprendidos entre 0 y 18. En la Figura \autoref{rgb}, se ilustra una muestra de las imágenes
+de satélite con su respectiva cobertura de suelo tras la reducción de categorías.
+
+\begin{figure}[!htpb]
+    \centering
+    \includegraphics[width=0.5\linewidth]{Img/Theme/rgbcorines.png}
+    \caption[Parches finales]{Visualización de 20 pares parches finales (RGB y CORINE con las nuevas etiquetas)}
+    \label{fig:rgb}
+\end{figure}
+
+
+\subsection{Eliminación de valores nulos (NaNs)}
+
+Tras consolidar la estructura de las etiquetas, se realizó un control de calidad con el fin de ver si había datos que presentaran valores nulos (NaN), lo cual supone un problema crítico a la hora
+de entrenar una red neuronal, provocando que todos los pesos se vuelvan valores nulos también a la hora de hacer la retropropagación, provocando el colapso total de la red.
+
+
+Por esta razón, se programó un script para la eliminación de estos ficheros con valores nulos en alguna entrada de su matriz. Tras realizar esta purga, el volumen del conjunto de datos final se 
+redujo a aproximadamente 1.175 millones de parches listos para entrenar los modelos.

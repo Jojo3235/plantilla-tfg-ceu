@@ -29,8 +29,8 @@ spatial resolution of 10 meters per pixel, and finally divide the macro patches 
 \newline
 For the development of the neural network, two distinct models were proposed: First, a \acrfull{cnnin} coupled with a \acrfull{mlpin} aimed at classifying each patch into its estimated 
 majority category, which takes 48x48x4 patches and maps them into a 1x19 probability vector. Subsequently, a model based on a \acrshort{cnnin} with a U-Net architecture was designed 
-to perform pixel-level classification on the 48x48 patches, assigning each coordinate one of the 19 labels proposed by BigEarthNet. This work aims to approach the benchmark performance 
-of BigEarthNet on Spanish soil, with the ultimate purpose of enabling faster, more efficient, and automated updates of national land use maps in the future, or at least serving as a support tool.
+to perform pixel-level classification on the 48x48 patches, assigning one of the 19 labels proposed by BigEarthNet to every pixel. This work aims to approach the utility BigEarthNet has 
+for Spanish soil, with the ultimate purpose of enabling faster, more efficient, and automated updates of national land use maps in the future, or at least serving as a support tool.
 }
 
 \keywordsen{Semantic segmentation, \acrfull{cnn}, Sentinel-2, CORINE Land Cover, Land use, Artificial intelligence}
